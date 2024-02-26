@@ -1,0 +1,102 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#define MAXLEN 19
+#define TABLESIZE 300007
+int cash = 100000;
+int complexity = 0;
+typedef struct item {char name[MAXLEN + 1]; int quantity; int saleprice;} item;
+typedef struct node {item* iPtr; struct node* next;} node;
+typedef struct hashtable {node** lists; int size;} hashtable;
+int hashfunc(char* word, int size);
+hashtable* init_tbl();
+node* init_newnode(char* i, int q, int p);
+void buy(hashtable* t, char* i, int q, int p); 
+node* exist(hashtable* t, char* i, int index);
+void sell(hashtable* t, char* i, int q);
+void change_price(hashtable* t, char* i, int p);
+void freethehash(hashtable* t);
+int main() {
+int n, quantity, price;
+char cmd[MAXLEN + 1], item[MAXLEN + 1];
+hashtable* table = init_tbl();
+scanf("%d", &n);
+while (n) {
+scanf("%s", cmd);
+if (strcmp(cmd, "buy") == 0) {
+scanf("%s %d %d", item, &quantity, &price);
+cash -= price;
+buy(table, item, quantity, price);
+if (strcmp(cmd, "sell") == 0) {
+scanf("%s %d", item, &quantity);
+sell(table, item, quantity);
+if (strcmp(cmd, "change_price") == 0) {
+scanf("%s %d", item, &price);
+change_price(table, item, price);
+n--;
+printf("%d\n%d", cash, complexity);
+freethehash(table);
+int hashfunc(char* word, int size) {
+int len = strlen(word);
+int res = 0;
+for (int i = 0; i < len; i++) {
+res = (1115 * res + (word[i] - 'a')) % size;
+return res;
+hashtable* init_tbl() {
+hashtable* table = malloc(sizeof(hashtable));
+table->lists = malloc((TABLESIZE) * sizeof(node*));
+table->size = TABLESIZE;
+for (int i = 0; i < TABLESIZE; i++) {
+table->lists[i] = NULL;
+return table;
+node* init_newnode(char* i, int q, int p) {
+node* temp = malloc(sizeof(node)); 
+temp->iPtr = malloc(sizeof(item));
+strcpy(temp->iPtr->name, i);
+temp->iPtr->quantity = q;
+temp->iPtr->saleprice = 0;
+return temp;
+void buy(hashtable* t, char* i, int q, int p) {
+int index = hashfunc(i, TABLESIZE); 
+node* newnode = exist(t, i, index);
+if (t->lists[index] == NULL) {
+newnode = init_newnode(i, q, p);
+t->lists[index] = newnode;
+} else if (newnode != NULL) {
+newnode->iPtr->quantity += q;
+newnode = init_newnode(i, q, p); 
+newnode->next = t->lists[index];
+t->lists[index] = newnode;
+complexity += 1;
+printf("%s %d %d\n", newnode->iPtr->name, newnode->iPtr->quantity, cash);
+node* exist(hashtable* t, char* i, int index) {
+if (t->lists[index] == NULL) {complexity += 1; return NULL;}
+node* temp = t->lists[index]; int count = 1;
+while (temp != NULL) {
+if (strcmp(temp->iPtr->name, i) == 0) {complexity += count; return temp;}
+count += 1; temp = temp->next;
+complexity += count; return NULL;
+void sell(hashtable* t, char* i, int q) {
+int index = hashfunc(i, TABLESIZE);
+node* temp = exist(t, i, index);
+if (temp->iPtr->quantity < q) {
+cash += (temp->iPtr->quantity * temp->iPtr->saleprice);
+temp->iPtr->quantity = 0;
+else{temp->iPtr->quantity -= q;
+cash += (q * temp->iPtr->saleprice);
+printf("%s %d %d\n", temp->iPtr->name, temp->iPtr->quantity, cash);
+void change_price(hashtable* t, char* i, int p) {
+int index = hashfunc(i, TABLESIZE);
+node* temp = exist(t, i, index);
+temp->iPtr->saleprice = p;
+void freethehash(hashtable* t) {
+for (int i = 0; i < t->size; i++) {
+node* temp = t->lists[i];
+while (temp != NULL) {
+node* next = temp->next;
+free(temp->iPtr);
+free(temp);
+temp = next;
+free(t->lists);
+free(t);
+
