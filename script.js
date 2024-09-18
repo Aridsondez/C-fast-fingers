@@ -1,7 +1,7 @@
 const quote_input=document.getElementById("quoteInput")
 const quote_display_element= document.getElementById("display")
 const timer_element= document.getElementById("timer")
-var time_limit=30
+var time_limit=60
 var letters=0;
 let pop_up_box= document.getElementById('popup')
 var score= document.getElementById('score');
